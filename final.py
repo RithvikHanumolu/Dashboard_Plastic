@@ -208,7 +208,7 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 # Add Frame 20.png here (moved to bottom)
-                st.image("Frame 20.png", width=350)
+                st.image("Frame 17.png", width=350)
 
             with col3:
                 st.markdown(f"""
@@ -219,7 +219,7 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 # Add Frame 17.png here (moved to bottom)
-                st.image("Frame 17.png", width=350)
+                st.image("Frame 20.png", width=350)
 
             st.markdown(f"""
                 <div class="bottom-left">{running_time_str}</div>
