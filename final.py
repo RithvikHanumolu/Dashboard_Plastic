@@ -102,6 +102,7 @@ def main():
                 font-size: 3em;
                 font-weight: bold;
                 margin-bottom: 5px;
+                white-space: nowrap; /* ADDED: Prevent numbers from wrapping */
             }}
             .metric-comparison {{
                 color: #70c38B;
@@ -136,7 +137,7 @@ def main():
             .stApp { background-color: #0E1117; color: white; }
             .metric-block { margin-bottom: 0px; text-align: center; }
             .metric-label { color: white; font-size: 1.5em; margin-bottom: 5px; white-space: nowrap; } /* ADDED */
-            .metric-value { color: white; font-size: 3em; font-weight: bold; margin-bottom: 5px; }
+            .metric-value { color: white; font-size: 3em; font-weight: bold; margin-bottom: 5px; white-space: nowrap; } /* ADDED */
             .metric-comparison { white-space: nowrap; /* REMOVED overflow and text-overflow */ }
             .bottom-left {
                 font-size: 1.1em; /* Reduced font size here */
@@ -190,7 +191,7 @@ def main():
                     </div>
                 """, unsafe_allow_html=True)
                 # IMPORTANT: Ensure this image file is in the same directory as your script
-                st.image("Frame 18.png", width=350)
+                st.image("Frame 18.png", width=1000) # INCREASED WIDTH TO 450
 
             with c2: # Second content column (will be in the middle)
                 st.markdown(f"""
@@ -201,7 +202,7 @@ def main():
                     </div>
                 """, unsafe_allow_html=True)
                 # IMPORTANT: Ensure this image file is in the same directory as your script
-                st.image("Frame 17.png", width=350)
+                st.image("Frame 17.png", width=1000) # INCREASED WIDTH TO 450
 
             with c3: # Third content column (will be on the right)
                 st.markdown(f"""
@@ -212,7 +213,7 @@ def main():
                     </div>
                 """, unsafe_allow_html=True)
                 # IMPORTANT: Ensure this image file is in the same directory as your script
-                st.image("Frame 20.png", width=350)
+                st.image("Frame 20.png", width=1000) # INCREASED WIDTH TO 450
 
             # Running Time positioned below the main columns
             st.markdown(f"""
