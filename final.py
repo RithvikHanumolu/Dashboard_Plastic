@@ -95,6 +95,7 @@ def main():
                 color: white;
                 font-size: 1.5em;
                 margin-bottom: 5px;
+                white-space: nowrap; /* ADDED: Prevent text wrapping for labels */
             }}
             .metric-value {{
                 color: white;
@@ -107,8 +108,7 @@ def main():
                 font-size: 1.8em;
                 margin-top: 0px;
                 white-space: nowrap;  /* Prevent line breaks */
-                overflow: hidden; /* Hide overflow if nowrap causes it to go beyond container */
-                text-overflow: ellipsis; /* Add ellipsis for overflowed text, though nowrap might make it just cut off */
+                /* REMOVED: overflow: hidden; and text-overflow: ellipsis; to prevent cutting off words */
             }}
             /* Adjusted .bottom-left for relative positioning, spacing, and font size */
             .bottom-left {{
@@ -123,7 +123,7 @@ def main():
                 display: flex; /* Use flexbox for centering content */
                 justify-content: center; /* Center horizontally */
                 align-items: flex-start; /* Align content to the top within the flex container */
-                margin-top: -20px; /* Adjust this value to pull the image up closer to the text. Experiment! */
+                margin-top: 10px; /* Adjusted to 10px to ensure it starts below text without overlap */
                 margin-bottom: 0px; /* Ensure no extra space below the image */
             }}
             </style>
@@ -135,9 +135,9 @@ def main():
             <style>
             .stApp { background-color: #0E1117; color: white; }
             .metric-block { margin-bottom: 0px; text-align: center; }
-            .metric-label { color: white; font-size: 1.5em; margin-bottom: 5px; }
+            .metric-label { color: white; font-size: 1.5em; margin-bottom: 5px; white-space: nowrap; } /* ADDED */
             .metric-value { color: white; font-size: 3em; font-weight: bold; margin-bottom: 5px; }
-            .metric-comparison { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .metric-comparison { white-space: nowrap; /* REMOVED overflow and text-overflow */ }
             .bottom-left {
                 font-size: 1.1em; /* Reduced font size here */
                 font-weight: bold;
@@ -149,7 +149,7 @@ def main():
                 display: flex;
                 justify-content: center;
                 align-items: flex-start;
-                margin-top: -20px;
+                margin-top: 10px; /* Adjusted to 10px */
                 margin-bottom: 0px;
             }
             </style>
@@ -161,8 +161,7 @@ def main():
     while True:
         now = datetime.now(TZ)
         elapsed_seconds = time_elapsed_seconds(now)
-        # Define running_hours here!
-        running_hours = int(elapsed_seconds // 3600) # FIX: Added this line
+        running_hours = int(elapsed_seconds // 3600)
         running_time_str = format_elapsed_hours(elapsed_seconds)
 
         plastic_produced = plastic_produced_so_far(now)
@@ -175,13 +174,14 @@ def main():
         credit_card_equiv = ((microplastic * 7) / 5000) * 100  # Corrected percentage
 
         with placeholder.container():
-            # Define column widths for centering and spacing
-            col_widths = [2, 3, 2, 3, 2, 3, 2]
+            # Define column widths for precise left, center, right alignment
+            # [left_empty_space, col1_content, space_1_2, col2_content, space_2_3, col3_content, right_empty_space]
+            col_widths = [1, 3, 8, 3, 8, 3, 1] # Total 27 units.
             
-            # Unpack columns: c1, c2, c3 are content columns; s1, s2, s3, s4 are spacers
-            s1, c1, s2, c2, s3, c3, s4 = st.columns(col_widths)
+            # Unpack columns: c1, c2, c3 are content columns; s_left, s_1_2, s_2_3, s_right are spacers
+            s_left, c1, s_1_2, c2, s_2_3, c3, s_right = st.columns(col_widths)
 
-            with c1: # Use the first content column
+            with c1: # First content column (will be on the left)
                 st.markdown(f"""
                     <div class="metric-block">
                         <p class="metric-label">Plastic Produced Today</p>
@@ -192,7 +192,7 @@ def main():
                 # IMPORTANT: Ensure this image file is in the same directory as your script
                 st.image("Frame 18.png", width=350)
 
-            with c2: # Use the second content column
+            with c2: # Second content column (will be in the middle)
                 st.markdown(f"""
                     <div class="metric-block">
                         <p class="metric-label">Plastic Entered Ocean</p>
@@ -203,7 +203,7 @@ def main():
                 # IMPORTANT: Ensure this image file is in the same directory as your script
                 st.image("Frame 17.png", width=350)
 
-            with c3: # Use the third content column
+            with c3: # Third content column (will be on the right)
                 st.markdown(f"""
                     <div class="metric-block">
                         <p class="metric-label">Microplastic Ingested</p>
@@ -214,7 +214,7 @@ def main():
                 # IMPORTANT: Ensure this image file is in the same directory as your script
                 st.image("Frame 20.png", width=350)
 
-            # Running Time moved here and styled to be centered with margin-top
+            # Running Time positioned below the main columns
             st.markdown(f"""
                 <div class="bottom-left">
                     Running Time: {running_hours} hours
