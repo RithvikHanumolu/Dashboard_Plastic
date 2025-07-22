@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from zoneinfo import ZoneInfo   # Python 3.9+
-import pandas as pd
+import pandas as pd # Kept for potential future use or if other data processing is added, but not strictly used for current plastic stats
 import time
 import base64
 
@@ -10,11 +10,7 @@ SECONDS_PER_DAY     = 24 * 60 * 60  # 86,400 seconds in a day
 UPDATE_INTERVAL_SEC = 2             # update frequency (seconds)
 TZ                  = ZoneInfo("America/Los_Angeles")
 
-FILE_PATH = "carbon-monitor-carbonmonitorGLOBAL-WORLD(datas).csv"
-
-TOTAL_DAILY_HA = 437.16
-HA_PER_SECOND = TOTAL_DAILY_HA / SECONDS_PER_DAY
-
+# --- ONLY PLASTIC-RELATED CONSTANTS ---
 TOTAL_DAILY_PLASTIC_KG = 1_260_273_973
 PLASTIC_KG_PER_SECOND = TOTAL_DAILY_PLASTIC_KG / SECONDS_PER_DAY
 
@@ -24,15 +20,8 @@ OCEAN_PLASTIC_KG_PER_SECOND = TOTAL_DAILY_OCEAN_PLASTIC_KG / SECONDS_PER_DAY
 TOTAL_DAILY_MICROPLASTIC_MG = 714.0
 MICROPLASTIC_MG_PER_SECOND = TOTAL_DAILY_MICROPLASTIC_MG / SECONDS_PER_DAY
 
-TOTAL_DAILY_ACRES_LOST = 202_513
-ACRES_PER_SECOND = TOTAL_DAILY_ACRES_LOST / SECONDS_PER_DAY
 
-ITALY_2023_ANNUAL_CO2_MILLION_METRIC_TONS = 312.67
-ITALY_2023_ANNUAL_CO2_METRIC_TONS = ITALY_2023_ANNUAL_CO2_MILLION_METRIC_TONS * 1_000_000
-ITALY_2023_DAILY_CO2_METRIC_TONS = int(ITALY_2023_ANNUAL_CO2_METRIC_TONS / 365)
-
-
-# --- Font Loader ------------------------------------------------------------
+# --- Font Loader (kept as it's a styling utility) ---------------------------
 def load_woff_font_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
@@ -49,9 +38,7 @@ def format_elapsed_hours(seconds: float) -> str:
     hours = int(seconds // 3600)
     return f"Running Time: {hours} hours"
 
-def hectares_lost_so_far(now: datetime) -> float:
-    return HA_PER_SECOND * time_elapsed_seconds(now)
-
+# --- ONLY PLASTIC-RELATED CALCULATION FUNCTIONS ---
 def plastic_produced_so_far(now: datetime) -> float:
     return PLASTIC_KG_PER_SECOND * time_elapsed_seconds(now)
 
@@ -60,9 +47,6 @@ def ocean_plastic_entered_so_far(now: datetime) -> float:
 
 def microplastic_ingested_so_far(now: datetime) -> float:
     return MICROPLASTIC_MG_PER_SECOND * time_elapsed_seconds(now)
-
-def acres_lost_so_far(now: datetime) -> float:
-    return ACRES_PER_SECOND * time_elapsed_seconds(now)
 
 def k_format(val: float) -> str:
     if val >= 1_000_000_000:
@@ -74,107 +58,111 @@ def k_format(val: float) -> str:
     else:
         return f"{val:,.0f}"
 
-# --- Carbon emissions specific ----------------------------------------------
-
-def load_total_today_emissions() -> float:
-    df = pd.read_csv(FILE_PATH, names=["region", "date", "sector", "co2_mt"])
-    df["date"] = df["date"].astype(str)
-
-    def parse_date(date_str):
-        for fmt in ("%m/%d/%Y", "%d/%m/%Y"):
-            try:
-                return datetime.strptime(date_str, fmt).date()
-            except ValueError:
-                continue
-        try:
-            return pd.to_datetime(date_str).date()
-        except Exception:
-            return None
-
-    df["date"] = df["date"].apply(parse_date)
-    df = df.dropna(subset=["date"])
-
-    today_2024 = datetime.now(TZ).date().replace(year=2024)
-    today_data = df[df["date"] == today_2024]
-
-    total_today_mt = today_data["co2_mt"].sum()
-    total_today_metric_tons = total_today_mt * 1_000_000
-    return total_today_metric_tons
-
-def emissions_so_far(now: datetime, total_today: float) -> float:
-    elapsed_seconds = time_elapsed_seconds(now)
-    return total_today * (elapsed_seconds / SECONDS_PER_DAY)
 
 # --- Streamlit app main -----------------------------------------------------
 
 def main():
-    st.set_page_config(layout="centered", initial_sidebar_state="collapsed")
+    # Set page config to wide layout to allow more horizontal space
+    st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-    qartella_font = load_woff_font_base64("Qartella.woff")
-    st.markdown(f"""
-        <style>
-        @font-face {{
-            font-family: 'Qartella';
-            src: url(data:font/woff;base64,{qartella_font}) format('woff');
-            font-weight: normal;
-            font-style: normal;
-        }}
+    # Attempt to load font, with fallback if not found
+    try:
+        qartella_font = load_woff_font_base64("Qartella.woff")
+        st.markdown(f"""
+            <style>
+            @font-face {{
+                font-family: 'Qartella';
+                src: url(data:font/woff;base64,{qartella_font}) format('woff');
+                font-weight: normal;
+                font-style: normal;
+            }}
 
-        /* Apply Qartella font globally */
-        html, body, [class*="st-"] {{
-            font-family: 'Qartella', serif !important;
-        }}
+            /* Apply Qartella font globally */
+            html, body, [class*="st-"] {{
+                font-family: 'Qartella', serif !important;
+            }}
 
-        .stApp {{
-            background-color: #0E1117;
-            color: white;
-        }}
+            .stApp {{
+                background-color: #0E1117;
+                color: white;
+            }}
 
-        .metric-block {{
-            margin-bottom: 30px;
-        }}
-        .metric-label {{
-            color: white;
-            font-size: 1.5em;
-            margin-bottom: 5px;
-        }}
-        .metric-value {{
-            color: white;
-            font-size: 3em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }}
-        .metric-comparison {{
-            color: #70c38B;
-            font-size: 1.8em;
-            margin-top: 0px;
-            white-space: nowrap;  /* Prevent line breaks */
-        }}
-        .bottom-left {{
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            font-size: 1.2em;
-            color: white;
-            font-family: 'Qartella', serif !important;
-        }}
-        </style>
-    """, unsafe_allow_html=True)
+            .metric-block {{
+                margin-bottom: 0px; /* Remove space below text block */
+                text-align: center; /* Center the text within the metric block */
+            }}
+            .metric-label {{
+                color: white;
+                font-size: 1.5em;
+                margin-bottom: 5px;
+            }}
+            .metric-value {{
+                color: white;
+                font-size: 3em;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }}
+            .metric-comparison {{
+                color: #70c38B;
+                font-size: 1.8em;
+                margin-top: 0px;
+                white-space: nowrap;  /* Prevent line breaks */
+                overflow: hidden; /* Hide overflow if nowrap causes it to go beyond container */
+                text-overflow: ellipsis; /* Add ellipsis for overflowed text, though nowrap might make it just cut off */
+            }}
+            /* Adjusted .bottom-left for relative positioning, spacing, and font size */
+            .bottom-left {{
+                font-size: 1.1em; /* Reduced font size here */
+                font-weight: bold;
+                margin-top: 60px; /* Space above running time */
+                text-align: center; /* Center the running time text */
+                width: 100%; /* Ensure it takes full width for centering */
+            }}
+            /* Crucial CSS to center images within their Streamlit-generated div and align vertically */
+            div.stImage {{
+                display: flex; /* Use flexbox for centering content */
+                justify-content: center; /* Center horizontally */
+                align-items: flex-start; /* Align content to the top within the flex container */
+                margin-top: -20px; /* Adjust this value to pull the image up closer to the text. Experiment! */
+                margin-bottom: 0px; /* Ensure no extra space below the image */
+            }}
+            </style>
+        """, unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.warning("Qartella.woff font file not found. Using default font.")
+        # Fallback CSS if font is not found (simplified for brevity)
+        st.markdown("""
+            <style>
+            .stApp { background-color: #0E1117; color: white; }
+            .metric-block { margin-bottom: 0px; text-align: center; }
+            .metric-label { color: white; font-size: 1.5em; margin-bottom: 5px; }
+            .metric-value { color: white; font-size: 3em; font-weight: bold; margin-bottom: 5px; }
+            .metric-comparison { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .bottom-left {
+                font-size: 1.1em; /* Reduced font size here */
+                font-weight: bold;
+                margin-top: 60px;
+                text-align: center;
+                width: 100%;
+            }
+            div.stImage {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                margin-top: -20px;
+                margin-bottom: 0px;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
-    @st.cache_data(ttl=SECONDS_PER_DAY)
-    def get_emissions_total():
-        try:
-            return load_total_today_emissions()
-        except Exception as e:
-            st.error(f"Failed to load emissions data: {e}")
-            return 0
 
-    total_today_emissions = get_emissions_total()
     placeholder = st.empty()
 
     while True:
         now = datetime.now(TZ)
         elapsed_seconds = time_elapsed_seconds(now)
+        # Define running_hours here!
+        running_hours = int(elapsed_seconds // 3600) # FIX: Added this line
         running_time_str = format_elapsed_hours(elapsed_seconds)
 
         plastic_produced = plastic_produced_so_far(now)
@@ -187,42 +175,50 @@ def main():
         credit_card_equiv = ((microplastic * 7) / 5000) * 100  # Corrected percentage
 
         with placeholder.container():
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown(f"""
-        <div class="metric-block">
-            <p class="metric-label">Plastic produced today</p>
-            <p class="metric-value">{plastic_produced:,.0f} kg</p>
-            <p class="metric-comparison">≈{plastic_to_cars:,.0f} cars</p>
-        </div>
-        """, unsafe_allow_html=True)
-                # Add Frame 18.png here (moved to bottom)
-                st.image("Frame 18.png", width=350)
+            # Define column widths for centering and spacing
+            col_widths = [2, 3, 2, 3, 2, 3, 2]
+            
+            # Unpack columns: c1, c2, c3 are content columns; s1, s2, s3, s4 are spacers
+            s1, c1, s2, c2, s3, c3, s4 = st.columns(col_widths)
 
-            with col2:
+            with c1: # Use the first content column
                 st.markdown(f"""
                     <div class="metric-block">
-                        <p class="metric-label">Plastic entered ocean</p>
+                        <p class="metric-label">Plastic Produced Today</p>
+                        <p class="metric-value">{plastic_produced:,.0f} kg</p>
+                        <p class="metric-comparison">≈{plastic_to_cars:,.0f} cars</p>
+                    </div>
+                """, unsafe_allow_html=True)
+                # IMPORTANT: Ensure this image file is in the same directory as your script
+                st.image("Frame 18.png", width=350)
+
+            with c2: # Use the second content column
+                st.markdown(f"""
+                    <div class="metric-block">
+                        <p class="metric-label">Plastic Entered Ocean</p>
                         <p class="metric-value">{ocean_plastic:,.0f} kg</p>
                         <p class="metric-comparison">≈{ocean_to_statues:,.0f} Statues of Liberty</p>
                     </div>
-                    """, unsafe_allow_html=True)
-                # Add Frame 20.png here (moved to bottom)
+                """, unsafe_allow_html=True)
+                # IMPORTANT: Ensure this image file is in the same directory as your script
                 st.image("Frame 17.png", width=350)
 
-            with col3:
+            with c3: # Use the third content column
                 st.markdown(f"""
                     <div class="metric-block">
-                        <p class="metric-label">Microplastic ingested</p>
+                        <p class="metric-label">Microplastic Ingested</p>
                         <p class="metric-value">{microplastic:,.0f} mg</p>
                         <p class="metric-comparison">≈{credit_card_equiv:.1f}% credit card/week</p>
                     </div>
-                    """, unsafe_allow_html=True)
-                # Add Frame 17.png here (moved to bottom)
+                """, unsafe_allow_html=True)
+                # IMPORTANT: Ensure this image file is in the same directory as your script
                 st.image("Frame 20.png", width=350)
 
+            # Running Time moved here and styled to be centered with margin-top
             st.markdown(f"""
-                <div class="bottom-left">{running_time_str}</div>
+                <div class="bottom-left">
+                    Running Time: {running_hours} hours
+                </div>
             """, unsafe_allow_html=True)
 
         time.sleep(UPDATE_INTERVAL_SEC)
