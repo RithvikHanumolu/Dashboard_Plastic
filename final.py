@@ -199,7 +199,7 @@ def main():
                         <p class="metric-comparison">≈{plastic_to_cars:,.0f} cars</p>
                     </div>
                 """, unsafe_allow_html=True)
-                st.image("Frame 18.png", width=1000)
+                st.image("Frame 18.png", width=350)
 
             with c2:
                 st.markdown(f"""
@@ -209,7 +209,7 @@ def main():
                         <p class="metric-comparison">≈{ocean_to_statues:,.0f} Statues of Liberty</p>
                     </div>
                 """, unsafe_allow_html=True)
-                st.image("Frame 17.png", width=1000)
+                st.image("Frame 17.png", width=350)
 
             with c3:
                 st.markdown(f"""
@@ -219,7 +219,7 @@ def main():
                         <p class="metric-comparison">≈{credit_card_equiv:.1f}% credit card/week</p>
                     </div>
                 """, unsafe_allow_html=True)
-                st.image("Frame 20.png", width=1000)
+                st.image("Frame 20.png", width=350)
 
             st.markdown(f"""
                 <div class="bottom-left">
