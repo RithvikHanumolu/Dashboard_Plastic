@@ -1,13 +1,13 @@
 import streamlit as st
 from datetime import datetime
-from zoneinfo import ZoneInfo   # Python 3.9+
-import pandas as pd # Kept for potential future use or if other data processing is added, but not strictly used for current plastic stats
+from zoneinfo import ZoneInfo
+import pandas as pd
 import time
 import base64
 
 # --- constants --------------------------------------------------------------
-SECONDS_PER_DAY     = 24 * 60 * 60  # 86,400 seconds in a day
-UPDATE_INTERVAL_SEC = 2             # update frequency (seconds)
+SECONDS_PER_DAY     = 24 * 60 * 60
+UPDATE_INTERVAL_SEC = 2
 TZ                  = ZoneInfo("America/Los_Angeles")
 
 # --- ONLY PLASTIC-RELATED CONSTANTS ---
@@ -62,10 +62,8 @@ def k_format(val: float) -> str:
 # --- Streamlit app main -----------------------------------------------------
 
 def main():
-    # Set page config to wide layout to allow more horizontal space
     st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-    # Attempt to load font, with fallback if not found
     try:
         qartella_font = load_woff_font_base64("Qartella.woff")
         st.markdown(f"""
@@ -77,7 +75,6 @@ def main():
                 font-style: normal;
             }}
 
-            /* Apply Qartella font globally */
             html, body, [class*="st-"] {{
                 font-family: 'Qartella', serif !important;
             }}
@@ -88,69 +85,82 @@ def main():
             }}
 
             .metric-block {{
-                margin-bottom: 0px; /* Remove space below text block */
-                text-align: center; /* Center the text within the metric block */
+                margin-bottom: 0px;
+                text-align: center; /* This centers the text within the metric-block div */
             }}
             .metric-label {{
                 color: white;
                 font-size: 1.5em;
                 margin-bottom: 5px;
-                white-space: nowrap; /* ADDED: Prevent text wrapping for labels */
+                white-space: nowrap;
             }}
             .metric-value {{
                 color: white;
                 font-size: 3em;
                 font-weight: bold;
                 margin-bottom: 5px;
-                white-space: nowrap; /* ADDED: Prevent numbers from wrapping */
+                white-space: nowrap;
             }}
             .metric-comparison {{
                 color: #70c38B;
                 font-size: 1.8em;
                 margin-top: 0px;
-                white-space: nowrap;  /* Prevent line breaks */
-                /* REMOVED: overflow: hidden; and text-overflow: ellipsis; to prevent cutting off words */
+                white-space: nowrap;
             }}
-            /* Adjusted .bottom-left for relative positioning, spacing, and font size */
             .bottom-left {{
-                font-size: 1.1em; /* Reduced font size here */
+                font-size: 1.1em;
                 font-weight: bold;
-                margin-top: 60px; /* Space above running time */
-                text-align: center; /* Center the running time text */
-                width: 100%; /* Ensure it takes full width for centering */
+                margin-top: 60px;
+                text-align: center;
+                width: 100%;
             }}
-            /* Crucial CSS to center images within their Streamlit-generated div and align vertically */
+            
+            /* Target Streamlit's column divs to ensure their content is centered */
+            /* Streamlit columns are typically flex containers. We want to align items in the cross-axis. */
+            div[data-testid="stColumn"] {{
+                display: flex;
+                flex-direction: column; /* Stack children vertically */
+                align-items: center;   /* Center horizontally within the column */
+                justify-content: flex-start; /* Align content to the top */
+            }}
+
+            /* Ensure stImage div also aligns its content */
             div.stImage {{
-                display: flex; /* Use flexbox for centering content */
-                justify-content: center; /* Center horizontally */
-                align-items: flex-start; /* Align content to the top within the flex container */
-                margin-top: 10px; /* Adjusted to 10px to ensure it starts below text without overlap */
-                margin-bottom: 0px; /* Ensure no extra space below the image */
+                display: flex;
+                justify-content: center; /* Center image horizontally */
+                align-items: flex-start;
+                margin-top: 10px;
+                margin-bottom: 0px;
             }}
             </style>
         """, unsafe_allow_html=True)
     except FileNotFoundError:
         st.warning("Qartella.woff font file not found. Using default font.")
-        # Fallback CSS if font is not found (simplified for brevity)
         st.markdown("""
             <style>
             .stApp { background-color: #0E1117; color: white; }
             .metric-block { margin-bottom: 0px; text-align: center; }
-            .metric-label { color: white; font-size: 1.5em; margin-bottom: 5px; white-space: nowrap; } /* ADDED */
-            .metric-value { color: white; font-size: 3em; font-weight: bold; margin-bottom: 5px; white-space: nowrap; } /* ADDED */
-            .metric-comparison { white-space: nowrap; /* REMOVED overflow and text-overflow */ }
+            .metric-label { color: white; font-size: 1.5em; margin-bottom: 5px; white-space: nowrap; }
+            .metric-value { color: white; font-size: 3em; font-weight: bold; margin-bottom: 5px; white-space: nowrap; }
+            .metric-comparison { white-space: nowrap; }
             .bottom-left {
-                font-size: 1.1em; /* Reduced font size here */
+                font-size: 1.1em;
                 font-weight: bold;
                 margin-top: 60px;
                 text-align: center;
                 width: 100%;
             }
+            div[data-testid="stColumn"] {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+            }
             div.stImage {
                 display: flex;
                 justify-content: center;
                 align-items: flex-start;
-                margin-top: 10px; /* Adjusted to 10px */
+                margin-top: 10px;
                 margin-bottom: 0px;
             }
             </style>
@@ -172,17 +182,16 @@ def main():
         ocean_to_statues = ocean_plastic / 204116
 
         microplastic = microplastic_ingested_so_far(now)
-        credit_card_equiv = ((microplastic * 7) / 5000) * 100  # Corrected percentage
+        credit_card_equiv = ((microplastic * 7) / 5000) * 100
 
         with placeholder.container():
-            # Define column widths for precise left, center, right alignment
-            # [left_empty_space, col1_content, space_1_2, col2_content, space_2_3, col3_content, right_empty_space]
-            col_widths = [1, 3, 8, 3, 8, 3, 1] # Total 27 units.
+            # Adjusting column widths to make content columns a bit wider relative to spacers
+            # This might help with perceived centering, though CSS alignment is primary
+            col_widths = [0.5, 4, 1, 4, 1, 4, 0.5] # Reduced spacer width, increased content width
             
-            # Unpack columns: c1, c2, c3 are content columns; s_left, s_1_2, s_2_3, s_right are spacers
             s_left, c1, s_1_2, c2, s_2_3, c3, s_right = st.columns(col_widths)
 
-            with c1: # First content column (will be on the left)
+            with c1:
                 st.markdown(f"""
                     <div class="metric-block">
                         <p class="metric-label">Plastic Produced Today</p>
@@ -190,32 +199,28 @@ def main():
                         <p class="metric-comparison">≈{plastic_to_cars:,.0f} cars</p>
                     </div>
                 """, unsafe_allow_html=True)
-                # IMPORTANT: Ensure this image file is in the same directory as your script
-                st.image("Frame 18.png", width=1000) # INCREASED WIDTH TO 450
+                st.image("Frame 18.png", width=1000)
 
-            with c2: # Second content column (will be in the middle)
+            with c2:
                 st.markdown(f"""
                     <div class="metric-block">
-                        <p class="metric-label">Plastic Entered Ocean</p>
+                        <p class="metric-label">Plastic Entered Ocean Today</p>
                         <p class="metric-value">{ocean_plastic:,.0f} kg</p>
                         <p class="metric-comparison">≈{ocean_to_statues:,.0f} Statues of Liberty</p>
                     </div>
                 """, unsafe_allow_html=True)
-                # IMPORTANT: Ensure this image file is in the same directory as your script
-                st.image("Frame 17.png", width=1000) # INCREASED WIDTH TO 450
+                st.image("Frame 17.png", width=1000)
 
-            with c3: # Third content column (will be on the right)
+            with c3:
                 st.markdown(f"""
                     <div class="metric-block">
-                        <p class="metric-label">Microplastic Ingested</p>
+                        <p class="metric-label">Microplastic Ingested Today</p>
                         <p class="metric-value">{microplastic:,.0f} mg</p>
                         <p class="metric-comparison">≈{credit_card_equiv:.1f}% credit card/week</p>
                     </div>
                 """, unsafe_allow_html=True)
-                # IMPORTANT: Ensure this image file is in the same directory as your script
-                st.image("Frame 20.png", width=1000) # INCREASED WIDTH TO 450
+                st.image("Frame 20.png", width=1000)
 
-            # Running Time positioned below the main columns
             st.markdown(f"""
                 <div class="bottom-left">
                     Running Time: {running_hours} hours
